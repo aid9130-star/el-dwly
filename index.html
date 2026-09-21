@@ -1,21 +1,20 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>منصة التفوق - لغة إنجليزية</title>
-    <meta name="description" content="منصة تعليمية متكاملة لمادة اللغة الإنجليزية للأستاذ إمام يوسف تشمل الدروس والاختبارات وإدارة أكواد الطلاب والنتائج." />
-    <meta property="og:title" content="منصة التفوق - لغة إنجليزية" />
-    <meta property="og:description" content="منصة تعليمية متكاملة لمادة اللغة الإنجليزية للأستاذ إمام يوسف تشمل الدروس والاختبارات وإدارة أكواد الطلاب والنتائج." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  </head>
-  <body class="font-['Cairo',sans-serif] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased transition-colors">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الهواري جروب | منصتك التعليمية</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="nav"><div class="brand">الهواري <span>جروب</span></div><nav><a href="#home">الرئيسية</a><a href="#courses">المواد</a><a href="#about">عن المنصة</a></nav><button class="btn small" onclick="showAuth('login')">دخول</button></header>
+<main id="home">
+<section class="hero"><div><p class="eyebrow">منصة تعليمية عربية</p><h1>اتعلّم بطريقة أبسط مع <span>الهواري جروب</span></h1><p>دروس فيديو، ملفات ومتابعة لتقدمك في مكان واحد.</p><div class="actions"><button class="btn" onclick="showAuth('register')">إنشاء حساب مجاني</button><a class="btn ghost" href="#courses">استكشف الدروس</a></div></div><div class="hero-card"><div class="play">▶</div><h3>دروسك في أي وقت</h3><p>سجّل حسابك مجانًا وابدأ التعلم.</p></div></section>
+<section id="courses" class="section"><div class="section-head"><div><p class="eyebrow">المحتوى</p><h2>أحدث الدروس</h2></div><span id="courseCount" class="muted"></span></div><div id="lessons" class="grid"></div></section>
+<section id="about" class="section about"><h2>عن الهواري جروب</h2><p>منصة تعليمية مصممة لتجميع الدروس والفيديوهات والملفات في تجربة سهلة للطلاب.</p></section>
+</main>
+<footer>© 2026 الهواري جروب — جميع الحقوق محفوظة</footer>
 
+<div id="authModal" class="modal hidden"><div class="modal-box"><button class="close" onclick="hideAuth()">×</button><div id="authContent"></div></div></div>
+<div id="dashboard" class="modal hidden"><div class="modal-box wide"><button class="close" onclick="hideDashboard()">×</button><div id="dashboardContent"></div></div></div>
+<script src="app.js"></script>
+</body></html>
