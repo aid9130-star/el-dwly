@@ -127,20 +127,20 @@ export const AdminDashboard: React.FC = () => {
   const fetchAllAdminData = async () => {
     try {
       const [statsRes, codesRes, lessonsRes, examsRes, studentsRes, resultsRes] = await Promise.all([
-        fetch('/api/admin/stats').then((r) => r.json()),
-        fetch('/api/admin/codes').then((r) => r.json()),
-        fetch('/api/lessons?isAdmin=true').then((r) => r.json()),
-        fetch('/api/exams').then((r) => r.json()),
-        fetch('/api/admin/students').then((r) => r.json()),
-        fetch('/api/admin/results').then((r) => r.json()),
+        fetch('/api/admin/stats').then((r) => r.json()).catch(() => null),
+        fetch('/api/admin/codes').then((r) => r.json()).catch(() => []),
+        fetch('/api/lessons?isAdmin=true').then((r) => r.json()).catch(() => []),
+        fetch('/api/exams').then((r) => r.json()).catch(() => []),
+        fetch('/api/admin/students').then((r) => r.json()).catch(() => []),
+        fetch('/api/admin/results').then((r) => r.json()).catch(() => []),
       ]);
 
-      setStats(statsRes);
-      setCodes(codesRes);
-      setLessons(lessonsRes);
-      setExams(examsRes);
-      setStudents(studentsRes);
-      setResults(resultsRes);
+      setStats(statsRes && !statsRes.error ? statsRes : null);
+      setCodes(Array.isArray(codesRes) ? codesRes : []);
+      setLessons(Array.isArray(lessonsRes) ? lessonsRes : []);
+      setExams(Array.isArray(examsRes) ? examsRes : []);
+      setStudents(Array.isArray(studentsRes) ? studentsRes : []);
+      setResults(Array.isArray(resultsRes) ? resultsRes : []);
     } catch (err) {
       console.error('Error fetching admin data:', err);
     }

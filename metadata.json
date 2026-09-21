@@ -2,5 +2,7 @@
   "name": "منصة التفوق - لغة إنجليزية",
   "description": "منصة تعليمية متكاملة لمادة اللغة الإنجليزية للأستاذ إمام يوسف تشمل الدروس والاختبارات وإدارة أكواد الطلاب والنتائج.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

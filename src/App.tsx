@@ -86,13 +86,15 @@ export default function App() {
       setLoadingContent(true);
       const studentId = currentStudent ? currentStudent.id : '';
       const [lessonsRes, examsRes] = await Promise.all([
-        fetch('/api/lessons').then((r) => r.json()),
-        fetch(`/api/exams?studentId=${studentId}`).then((r) => r.json()),
+        fetch('/api/lessons').then((r) => r.json()).catch(() => []),
+        fetch(`/api/exams?studentId=${studentId}`).then((r) => r.json()).catch(() => []),
       ]);
-      setLessons(lessonsRes || []);
-      setExams(examsRes || []);
+      setLessons(Array.isArray(lessonsRes) ? lessonsRes : []);
+      setExams(Array.isArray(examsRes) ? examsRes : []);
     } catch (err) {
       console.error('Failed to load student content:', err);
+      setLessons([]);
+      setExams([]);
     } finally {
       setLoadingContent(false);
     }

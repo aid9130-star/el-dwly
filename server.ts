@@ -1,6 +1,6 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { seedInitialDataIfNeeded } from './src/db/seed.ts';
 import {
@@ -26,17 +26,16 @@ import {
   clearDemoData,
 } from './src/db/queries.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
-  // Seed DB with demo English curriculum & codes
-  await seedInitialDataIfNeeded();
+  // Seed DB with demo English curriculum & codes asynchronously without delaying server listen
+  seedInitialDataIfNeeded().catch((err) => {
+    console.error('Initial DB seeding background error:', err);
+  });
 
   // --- API ROUTES ---
 
@@ -298,9 +297,14 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = fs.existsSync(path.join(__dirname, 'index.html'))
+      ? __dirname
+      : path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
+      if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'Endpoint not found' });
+      }
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

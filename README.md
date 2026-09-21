@@ -1,19 +1,20 @@
-# الهواري جروب — موقع تعليمي
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-هذه نسخة Web قابلة للتشغيل مباشرة كواجهة تجريبية.
+# Run and deploy your AI Studio app
 
-## التشغيل
-افتح `index.html` في المتصفح، أو ارفع المجلد على أي استضافة Static.
+This contains everything you need to run your app locally.
 
-## مهم قبل النشر الحقيقي
-هذه النسخة تستخدم LocalStorage فقط، لذلك الحسابات ولوحة الإدارة تجريبية وموجودة على نفس الجهاز/المتصفح.
-لمنصة حقيقية متعددة المستخدمين يجب ربط:
-- Firebase Authentication أو Supabase Auth للحسابات.
-- Firestore/Supabase Database للدروس والتقدم.
-- تخزين فيديو/Streaming مناسب للفيديوهات.
-- صلاحيات Server-side للوحة الإدارة.
+View your app in AI Studio: https://ai.studio/apps/6fb5e6f0-f4fd-4d6f-b034-476159e96297
 
-لا تضع كلمة مرور مدير أو أسرار API داخل JavaScript الخاص بالواجهة.
+## Run Locally
 
-## نشر الموقع
-يمكن رفع الملفات على استضافة تدعم HTML/CSS/JS. بعد ربط Backend يمكن استخدام نفس الواجهة كأساس للموقع النهائي.
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
