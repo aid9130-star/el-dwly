@@ -8,6 +8,8 @@ import { StudentResultsView } from './components/StudentResultsView.tsx';
 import { AdminDashboard } from './components/AdminDashboard.tsx';
 import { AdminLoginModal } from './components/AdminLoginModal.tsx';
 import { Student, Lesson, Exam } from './types.ts';
+import * as dataService from './lib/dataService.ts';
+import * as clientStore from './lib/clientStore.ts';
 
 export default function App() {
   const [currentRole, setCurrentRole] = useState<'student' | 'admin' | 'none'>('none');
@@ -50,22 +52,29 @@ export default function App() {
   useEffect(() => {
     const savedToken = localStorage.getItem('tafawwoq_student_token');
     if (savedToken) {
-      fetch('/api/student/me', {
-        headers: { 'x-student-token': savedToken },
-      })
-        .then((res) => {
-          if (res.ok) return res.json();
-          throw new Error('Invalid session');
+      const localStudents = clientStore.getStudentsLocal();
+      const matched = localStudents.find((s) => s.sessionToken === savedToken);
+      if (matched) {
+        setCurrentStudent(matched);
+        setCurrentRole('student');
+      } else {
+        fetch('/api/student/me', {
+          headers: { 'x-student-token': savedToken },
         })
-        .then((data) => {
-          if (data.student) {
-            setCurrentStudent(data.student);
-            setCurrentRole('student');
-          }
-        })
-        .catch(() => {
-          localStorage.removeItem('tafawwoq_student_token');
-        });
+          .then((res) => {
+            if (res.ok) return res.json();
+            throw new Error('Invalid session');
+          })
+          .then((data) => {
+            if (data.student) {
+              setCurrentStudent(data.student);
+              setCurrentRole('student');
+            }
+          })
+          .catch(() => {
+            localStorage.removeItem('tafawwoq_student_token');
+          });
+      }
     } else {
       const adminAuth = sessionStorage.getItem('tafawwoq_admin_auth');
       if (adminAuth) {
@@ -84,17 +93,15 @@ export default function App() {
   const loadStudentContent = async () => {
     try {
       setLoadingContent(true);
-      const studentId = currentStudent ? currentStudent.id : '';
+      const studentId = currentStudent ? currentStudent.id : undefined;
       const [lessonsRes, examsRes] = await Promise.all([
-        fetch('/api/lessons').then((r) => r.json()).catch(() => []),
-        fetch(`/api/exams?studentId=${studentId}`).then((r) => r.json()).catch(() => []),
+        dataService.getLessons(false),
+        dataService.getExams(studentId),
       ]);
-      setLessons(Array.isArray(lessonsRes) ? lessonsRes : []);
-      setExams(Array.isArray(examsRes) ? examsRes : []);
+      setLessons(lessonsRes || []);
+      setExams(examsRes || []);
     } catch (err) {
       console.error('Failed to load student content:', err);
-      setLessons([]);
-      setExams([]);
     } finally {
       setLoadingContent(false);
     }

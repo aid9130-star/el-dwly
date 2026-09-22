@@ -17,8 +17,11 @@ import {
   ShieldCheck,
   RotateCcw,
   AlertTriangle,
+  Lock,
 } from 'lucide-react';
 import { AccessCode, Lesson, Exam, AdminStats } from '../types.ts';
+import { ChangeAdminPinModal } from './ChangeAdminPinModal.tsx';
+import * as dataService from '../lib/dataService.ts';
 import {
   ResponsiveContainer,
   BarChart,
@@ -70,7 +73,7 @@ export const AdminDashboard: React.FC = () => {
   });
   const [examQuestionsList, setExamQuestionsList] = useState<Array<{
     questionText: string;
-    type: string;
+    type: 'multiple_choice' | 'true_false';
     options: string[];
     correctOptionIndex: number;
     explanation: string;
@@ -90,6 +93,7 @@ export const AdminDashboard: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [results, setResults] = useState<any[]>([]);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showChangePinModal, setShowChangePinModal] = useState(false);
   const [resetPin, setResetPin] = useState('');
   const [resetting, setResetting] = useState(false);
   const [resetMsg, setResetMsg] = useState<string | null>(null);
@@ -103,13 +107,7 @@ export const AdminDashboard: React.FC = () => {
     setResetting(true);
     setResetMsg(null);
     try {
-      const res = await fetch('/api/admin/reset-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: resetPin, keepCurriculum: true }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشلت العملية');
+      await dataService.resetData();
       setResetMsg('تم تصفير سجلات الطلاب التجريبية وإعادة الأكواد غير مستخدمة بنجاح!');
       setTimeout(() => {
         setShowResetModal(false);
@@ -127,20 +125,20 @@ export const AdminDashboard: React.FC = () => {
   const fetchAllAdminData = async () => {
     try {
       const [statsRes, codesRes, lessonsRes, examsRes, studentsRes, resultsRes] = await Promise.all([
-        fetch('/api/admin/stats').then((r) => r.json()).catch(() => null),
-        fetch('/api/admin/codes').then((r) => r.json()).catch(() => []),
-        fetch('/api/lessons?isAdmin=true').then((r) => r.json()).catch(() => []),
-        fetch('/api/exams').then((r) => r.json()).catch(() => []),
-        fetch('/api/admin/students').then((r) => r.json()).catch(() => []),
-        fetch('/api/admin/results').then((r) => r.json()).catch(() => []),
+        dataService.getStats(),
+        dataService.getCodes(),
+        dataService.getLessons(true),
+        dataService.getExams(),
+        dataService.getStudents(),
+        dataService.getResults(),
       ]);
 
-      setStats(statsRes && !statsRes.error ? statsRes : null);
-      setCodes(Array.isArray(codesRes) ? codesRes : []);
-      setLessons(Array.isArray(lessonsRes) ? lessonsRes : []);
-      setExams(Array.isArray(examsRes) ? examsRes : []);
-      setStudents(Array.isArray(studentsRes) ? studentsRes : []);
-      setResults(Array.isArray(resultsRes) ? resultsRes : []);
+      setStats(statsRes);
+      setCodes(codesRes);
+      setLessons(lessonsRes);
+      setExams(examsRes);
+      setStudents(studentsRes);
+      setResults(resultsRes);
     } catch (err) {
       console.error('Error fetching admin data:', err);
     }
@@ -151,14 +149,8 @@ export const AdminDashboard: React.FC = () => {
     e.preventDefault();
     setGenerating(true);
     try {
-      const res = await fetch('/api/admin/codes/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: generateCount, note: generateNote }),
-      });
-      if (res.ok) {
-        await fetchAllAdminData();
-      }
+      await dataService.generateCodes(generateCount, generateNote);
+      await fetchAllAdminData();
     } catch (err) {
       console.error(err);
     } finally {
@@ -169,12 +161,8 @@ export const AdminDashboard: React.FC = () => {
   const handleToggleCode = async (id: number, currentStatus: string) => {
     const nextStatus = currentStatus === 'disabled' ? 'unused' : 'disabled';
     try {
-      const res = await fetch(`/api/admin/codes/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: nextStatus }),
-      });
-      if (res.ok) fetchAllAdminData();
+      await dataService.updateCode(id, nextStatus as any);
+      fetchAllAdminData();
     } catch (err) {
       console.error(err);
     }
@@ -183,8 +171,8 @@ export const AdminDashboard: React.FC = () => {
   const handleDeleteCode = async (id: number) => {
     if (!window.confirm('هل أنت متأكد من رغبتك في حذف هذا الكود؟')) return;
     try {
-      const res = await fetch(`/api/admin/codes/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchAllAdminData();
+      await dataService.deleteCode(id);
+      fetchAllAdminData();
     } catch (err) {
       console.error(err);
     }
@@ -200,24 +188,18 @@ export const AdminDashboard: React.FC = () => {
   const handleCreateLesson = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/lessons', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newLesson),
+      await dataService.saveLesson(newLesson);
+      setShowAddLessonModal(false);
+      setNewLesson({
+        title: '',
+        description: '',
+        videoUrl: '',
+        durationMinutes: 40,
+        term: 'الترم الأول',
+        unit: 'Unit 1',
+        lessonNumber: lessons.length + 1,
       });
-      if (res.ok) {
-        setShowAddLessonModal(false);
-        setNewLesson({
-          title: '',
-          description: '',
-          videoUrl: '',
-          durationMinutes: 40,
-          term: 'الترم الأول',
-          unit: 'Unit 1',
-          lessonNumber: lessons.length + 1,
-        });
-        fetchAllAdminData();
-      }
+      fetchAllAdminData();
     } catch (err) {
       console.error(err);
     }
@@ -226,8 +208,8 @@ export const AdminDashboard: React.FC = () => {
   const handleDeleteLesson = async (id: number) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا الدرس نهائياً؟')) return;
     try {
-      const res = await fetch(`/api/lessons/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchAllAdminData();
+      await dataService.deleteLesson(id);
+      fetchAllAdminData();
     } catch (err) {
       console.error(err);
     }
@@ -237,18 +219,9 @@ export const AdminDashboard: React.FC = () => {
   const handleCreateExam = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/exams', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          exam: newExam,
-          questions: examQuestionsList,
-        }),
-      });
-      if (res.ok) {
-        setShowAddExamModal(false);
-        fetchAllAdminData();
-      }
+      await dataService.createExam(newExam, examQuestionsList);
+      setShowAddExamModal(false);
+      fetchAllAdminData();
     } catch (err) {
       console.error(err);
     }
@@ -257,8 +230,8 @@ export const AdminDashboard: React.FC = () => {
   const handleDeleteExam = async (id: number) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا الاختبار؟')) return;
     try {
-      const res = await fetch(`/api/exams/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchAllAdminData();
+      await dataService.deleteExam(id);
+      fetchAllAdminData();
     } catch (err) {
       console.error(err);
     }
@@ -303,6 +276,14 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Action quick shortcut */}
         <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowChangePinModal(true)}
+            title="تغيير كلمة مرور المشرف للوحة التحكم"
+            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 border border-amber-900/40 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            <span>تغيير كلمة المرور</span>
+          </button>
           <button
             onClick={() => setShowResetModal(true)}
             title="تصفير بيانات الطلاب والتسليمات التجريبية وبدء عام دراسي نظيف"
@@ -434,6 +415,27 @@ export const AdminDashboard: React.FC = () => {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Security & Access Management Card */}
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 shadow-md border border-indigo-900/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-indigo-300 text-xs font-bold">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>أمان وحماية لوحة المشرف</span>
+              </div>
+              <h4 className="text-base font-bold text-white">كلمة مرور الأستاذ إمام يوسف (Admin PIN)</h4>
+              <p className="text-slate-300 text-xs leading-relaxed max-w-xl">
+                لوحة التحكم محمية بكلمة مرور خاصة في قاعدة البيانات. يمكنك تغيير كلمة المرور في أي وقت بحرية واختيار كلمة مرور جديدة سريّة تناسبك.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowChangePinModal(true)}
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 whitespace-nowrap cursor-pointer shrink-0"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>تغيير كلمة المرور الآن</span>
+            </button>
           </div>
         </div>
       )}
@@ -1140,6 +1142,12 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* CHANGE ADMIN PIN MODAL */}
+      <ChangeAdminPinModal
+        isOpen={showChangePinModal}
+        onClose={() => setShowChangePinModal(false)}
+      />
     </div>
   );
 };

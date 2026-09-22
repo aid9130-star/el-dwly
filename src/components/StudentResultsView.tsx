@@ -14,6 +14,7 @@ import {
   Cell,
 } from 'recharts';
 import { Student } from '../types.ts';
+import * as dataService from '../lib/dataService.ts';
 
 interface StudentResultsViewProps {
   student: Student;
@@ -31,16 +32,10 @@ export const StudentResultsView: React.FC<StudentResultsViewProps> = ({ student 
   const fetchResults = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/student/${student.id}/results`);
-      if (res.ok) {
-        const data = await res.json();
-        setResults(Array.isArray(data) ? data : []);
-      } else {
-        setResults([]);
-      }
+      const data = await dataService.getResults(student.id);
+      setResults(data);
     } catch (err) {
       console.error(err);
-      setResults([]);
     } finally {
       setLoading(false);
     }
